@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SnaKTox - Snakebite Emergency Response System</title>
+    <meta name="description" content="AI-powered snakebite emergency response system for Sub-Saharan Africa" />
+    
+    <!-- Preload critical resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Theme Color for Mobile -->
+    <meta name="theme-color" content="#3b82f6" />
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="SnaKTox">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="SnaKTox - Snakebite Emergency Response" />
+    <meta property="og:description" content="AI-powered life-saving system for snakebite emergencies in Sub-Saharan Africa" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://snaktox.org" />
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SnaKTox - Snakebite Emergency Response" />
+    <meta name="twitter:description" content="AI-powered life-saving system for snakebite emergencies" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="/icons/icon-512x512.png" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+    
+    <style>
+      /* Critical CSS for initial loading */
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        background-color: #f9fafb;
+        color: #111827;
+        overflow-x: hidden;
+      }
+      
+      .dark body {
+        background-color: #111827;
+        color: #f9fafb;
+      }
+      
+      /* Loading spinner for initial app load */
+      #app-loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #f9fafb;
+        z-index: 9999;
+        transition: opacity 0.3s ease-out;
+      }
+      
+      .dark #app-loading {
+        background: #111827;
+      }
+      
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #e5e7eb;
+        border-top: 4px solid #3b82f6;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      
+      .dark .loading-spinner {
+        border: 4px solid #374151;
+        border-top: 4px solid #3b82f6;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      .loading-text {
+        margin-top: 16px;
+        font-size: 16px;
+        color: #6b7280;
+        font-weight: 500;
+      }
+      
+      .dark .loading-text {
+        color: #9ca3af;
+      }
+      
+      /* Hide loading screen when app is ready */
+      #app-loading.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* Prevent flash of unstyled content */
+      #root {
+        min-height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- App Loading Screen -->
+    <div id="app-loading">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Loading SnaKTox...</div>
+    </div>
+    
+    <!-- React App Root -->
+    <div id="root"></div>
+    
+    <script type="module" src="/src/main.jsx"></script>
+    
+    <script>
+      // Enhanced loading screen handling
+      function hideLoadingScreen() {
+        const loadingElement = document.getElementById('app-loading');
+        if (loadingElement) {
+          loadingElement.classList.add('hidden');
+          setTimeout(() => {
+            if (loadingElement.parentNode) {
+              loadingElement.remove();
+            }
+          }, 300);
+        }
+      }
+
+      // Remove loading screen when app is mounted
+      window.addEventListener('load', function() {
+        // Give the app a minimum loading time for better UX
+        setTimeout(hideLoadingScreen, 800);
+      });
+
+      // Fallback: if app takes too long, still remove loading screen
+      setTimeout(hideLoadingScreen, 5000);
+
+      // Enhanced Service Worker Registration
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', async () => {
+          try {
+            const registration = await navigator.serviceWorker.register('/sw.js', {
+              scope: '/',
+              updateViaCache: 'none'
+            });
+            
+            console.log('SW registered: ', registration);
+            
+            // Check for updates
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              console.log('New service worker found:', newWorker);
+            });
+
+            // If controlled, reload to ensure clean state
+            if (navigator.serviceWorker.controller) {
+              console.log('Service worker controlling the page');
+            }
+
+          } catch (registrationError) {
+            console.log('SW registration failed: ', registrationError);
+          }
+        });
+
+        // Handle controller changes
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          console.log('Service worker controller changed');
+        });
+      }
+
+      // Enhanced Dark mode detection
+      function initDarkMode() {
+        try {
+          const isDark = localStorage.theme === 'dark' || 
+            (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+            localStorage.theme = 'dark';
+          } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.theme = 'light';
+          }
+        } catch (e) {
+          console.log('Dark mode initialization error:', e);
+        }
+      }
+
+      // Initialize dark mode
+      initDarkMode();
+
+      // Listen for system dark mode changes
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        if (!('theme' in localStorage)) {
+          if (e.matches) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        }
+      });
+
+      // Enhanced error handling
+      window.addEventListener('error', (e) => {
+        console.error('Global error:', e.error);
+      });
+
+      window.addEventListener('unhandledrejection', (e) => {
+        console.error('Unhandled promise rejection:', e.reason);
+      });
+
+      // Prevent drag and drop default behavior
+      document.addEventListener('dragover', (e) => e.preventDefault());
+      document.addEventListener('drop', (e) => e.preventDefault());
+    </script>
+  </body>
+</html>
